@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniTask パスワード再設定</title>
+<style>
+body {
+  font-family: sans-serif;
+  background: #f6f7f9;
+  padding: 25px;
+}
+.card {
+  max-width: 400px;
+  margin: 40px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 18px;
+}
+input, button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  margin-top: 12px;
+  font-size: 16px;
+  border-radius: 10px;
+}
+button {
+  background: #20242a;
+  color: white;
+  border: none;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🔑 MiniTask</h2>
+  <h3>パスワード再設定</h3>
+
+  <p id="status">認証を確認しています…</p>
+
+  <form id="form" hidden>
+    <input
+      id="password"
+      type="password"
+      placeholder="新しいパスワード（8文字以上）"
+      minlength="8"
+      required
+    >
+    <button type="submit">パスワードを変更する</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://xcltnwevmmeaumaxrlvs.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_HOy0flgDha2QQKx-5dVZXg_CbvGQadU
+";
+
+const client = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      detectSessionInUrl: true,
+      persistSession: false
+    }
+  }
+);
+
+const status = document.getElementById("status");
+const form = document.getElementById("form");
+
+let recoveryVerified = false;
+
+client.auth.onAuthStateChange((event) => {
+  if (event === "PASSWORD_RECOVERY") {
+    recoveryVerified = true;
+    status.textContent = "新しいパスワードを入力してください。";
+    form.hidden = false;
+  }
+});
+
+async function checkRecovery() {
+  const params = new URLSearchParams(location.search);
+  const hash = new URLSearchParams(location.hash.slice(1));
+
+  if (params.get("error") || hash.get("error")) {
+    status.textContent = "リンクが無効か期限切れです。再設定メールを送り直してください。";
+    return;
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  if (!recoveryVerified) {
+    status.textContent =
+      "パスワード再設定メールのリンクから、このページを開いてください。";
+  }
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!recoveryVerified) return;
+
+  const password = document.getElementById("password").value;
+
+  if (password.length < 8) {
+    status.textContent = "8文字以上で入力してください。";
+    return;
+  }
+
+  const button = form.querySelector("button");
+  button.disabled = true;
+  status.textContent = "変更しています…";
+
+  const { error } = await client.auth.updateUser({
+    password: password
+  });
+
+  if (error) {
+    status.textContent = "エラー：" + error.message;
+    button.disabled = false;
+    return;
+  }
+
+  status.textContent = "✅ パスワードを変更しました！";
+  form.hidden = true;
+  await client.auth.signOut();
+});
+
+checkRecovery();
+</script>
+
+</body>
+</html>

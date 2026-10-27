@@ -75,7 +75,7 @@ const form = document.getElementById("form");
 let recoveryVerified = false;
 
 client.auth.onAuthStateChange((event) => {
-  if (event === "PASSWORD_RECOVERY") {
+if(event==="PASSWORD_RECOVERY" || (event==="SIGNED_IN" && location.hash.includes("type=recovery"))){
     recoveryVerified = true;
     status.textContent = "新しいパスワードを入力してください。";
     form.hidden = false;

@@ -75,7 +75,8 @@ const form = document.getElementById("form");
 let recoveryVerified = false;
 
 client.auth.onAuthStateChange((event) => {
-if(event==="PASSWORD_RECOVERY" || (event==="SIGNED_IN" && location.hash.includes("type=recovery"))){
+console.log("認証イベント:", event);
+  if(event==="PASSWORD_RECOVERY" || (event==="SIGNED_IN" && location.hash.includes("type=recovery"))){
     recoveryVerified = true;
     status.textContent = "新しいパスワードを入力してください。";
     form.hidden = false;
@@ -98,7 +99,7 @@ if (error) {
   return;
 }
 
-if (data.session && location.hash.includes("type=recovery")) {
+if (data.session && recoveryVerified) {
   recoveryVerified = true;
   status.textContent = "新しいパスワードを入力してください。";
   form.hidden = false;

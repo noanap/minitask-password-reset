@@ -91,7 +91,19 @@ async function checkRecovery() {
     return;
   }
 
-  await new Promise(resolve => setTimeout(resolve, 1200));
+  const { data, error } = await client.auth.getSession();
+
+if (error) {
+  status.textContent = "認証エラー：" + error.message;
+  return;
+}
+
+if (data.session && location.hash.includes("type=recovery")) {
+  recoveryVerified = true;
+  status.textContent = "新しいパスワードを入力してください。";
+  form.hidden = false;
+  return;
+}
 
   if (!recoveryVerified) {
     status.textContent =
